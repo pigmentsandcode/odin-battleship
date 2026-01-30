@@ -63,4 +63,29 @@ export class Gameboard {
       return false;
     }
   }
+
+  receiveAttack(attackX, attackY) {
+    if (attackX < 0 || attackY < 0 || attackX > 9 || attackY > 9) {
+      return "invalid";
+    }
+
+    const targetSpot = this.board[attackX][attackY];
+    if (targetSpot === "empty") {
+      this.board[attackX][attackY] = "miss";
+      return "miss";
+    } else if (targetSpot === "miss") {
+      return "repeat miss";
+    } else {
+      if (targetSpot.hit) {
+        return "repeat hit";
+      }
+      this.board[attackX][attackY].ship.hit();
+      this.board[attackX][attackY].hit = true;
+      if (this.board[attackX][attackY].ship.isSunk()) {
+        this.numSunk++;
+        return "sink";
+      }
+      return "hit";
+    }
+  }
 }

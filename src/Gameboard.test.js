@@ -72,3 +72,57 @@ describe("place ships", () => {
     });
   });
 });
+
+describe("receiveAttack", () => {
+  describe("valid attacks", () => {
+    let testBoard;
+    beforeEach(() => {
+      testBoard = new Gameboard();
+      testBoard.placeShip(3, [2, 2], "horizontal");
+    });
+
+    test("valid miss", () => {
+      const result = testBoard.receiveAttack(7, 3);
+      expect(result).toBe("miss");
+
+      const resultBoard = testBoard.getGameboard();
+      expect(resultBoard[7][3]).toBe("miss");
+    });
+    test("valid hit", () => {
+      const result = testBoard.receiveAttack(3, 2);
+      expect(result).toBe("hit");
+      const resultBoard = testBoard.getGameboard();
+      expect(resultBoard[3][2].hit).toBe(true);
+    });
+    test("valid sink", () => {
+      testBoard.receiveAttack(2, 2);
+      testBoard.receiveAttack(3, 2);
+      const isSunk = testBoard.receiveAttack(4, 2);
+      expect(isSunk).toBe("sink");
+
+      const resultBoard = testBoard.getGameboard();
+      expect(resultBoard[2][2].ship.isSunk()).toBe(true);
+    });
+  });
+  describe("invalid attacks", () => {
+    let testBoard;
+    beforeEach(() => {
+      testBoard = new Gameboard();
+      testBoard.placeShip(3, [2, 2], "horizontal");
+    });
+    test("invalid repeat miss", () => {
+      testBoard.receiveAttack(2, 1);
+      const result = testBoard.receiveAttack(2, 1);
+      expect(result).toBe("repeat miss");
+    });
+    test("invalid repeat hit", () => {
+      testBoard.receiveAttack(2, 2);
+      const result = testBoard.receiveAttack(2, 2);
+      expect(result).toBe("repeat hit");
+    });
+    test("invalid off grid", () => {
+      const result = testBoard.receiveAttack(9, 10);
+      expect(result).toBe("invalid");
+    });
+  });
+});
