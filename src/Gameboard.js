@@ -16,6 +16,10 @@ export class Gameboard {
     return this.board;
   }
 
+  getNumSunk() {
+    return this.numSunk;
+  }
+
   checkValidPlace(startX, startY, direction, shipSize) {
     if (startX < 0 || startY < 0 || startX > 9 || startY > 9) {
       return false;

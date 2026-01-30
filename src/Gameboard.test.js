@@ -126,3 +126,32 @@ describe("receiveAttack", () => {
     });
   });
 });
+
+describe("numSunk values", () => {
+  let testBoard;
+  beforeEach(() => {
+    testBoard = new Gameboard();
+    testBoard.placeShip(3, [2, 2], "horizontal");
+  });
+
+  test("initial is zero", () => {
+    expect(testBoard.getNumSunk()).toBe(0);
+  });
+
+  test("after miss is still zero", () => {
+    testBoard.receiveAttack(7, 3);
+    expect(testBoard.getNumSunk()).toBe(0);
+  });
+
+  test("hit once is still zero", () => {
+    testBoard.receiveAttack(3, 2);
+    expect(testBoard.getNumSunk()).toBe(0);
+  });
+
+  test("ship is sunk - value is one", () => {
+    testBoard.receiveAttack(2, 2);
+    testBoard.receiveAttack(3, 2);
+    testBoard.receiveAttack(4, 2);
+    expect(testBoard.getNumSunk()).toBe(1);
+  });
+});
