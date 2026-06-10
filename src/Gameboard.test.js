@@ -20,54 +20,110 @@ describe("get empty gameboard", () => {
   });
 });
 
+describe("addShips", () => {
+  let board;
+  beforeEach(() => {
+    board = new Gameboard();
+  });
+
+  test("add length 3 ship", () => {
+    board.addShip("length3", 3);
+    expect(board.hasNonDeployedShip("length3")).toBe(true);
+  });
+
+  test("error if add ship of same name", () => {
+    board.addShip("length3", 3);
+    expect(() => board.addShip("length3", 3)).toThrow(
+      "The ship has already been added",
+    );
+  });
+});
+
 describe("place ships", () => {
   describe("valid placements", () => {
     let board;
+    const shipName3 = "shipLength3";
+    const shipName5 = "shipLength5";
+    const shipName4 = "shipLength4";
+
     beforeEach(() => {
       board = new Gameboard();
     });
 
     test("valid size 3 vertical", () => {
-      expect(board.placeShip(3, [1, 3], "vertical")).toBe(true);
+      board.addShip(shipName3, 3);
+      expect(board.placeShip(shipName3, [1, 3], "vertical")).toBe(true);
+      expect(board.hasDeployedShip(shipName3)).toBe(true);
+      expect(board.hasNonDeployedShip(shipName3)).toBeFalsy();
+      const coordsResult = board.getShipPosition(shipName3)[0];
+      expect(coordsResult[0][0]).toBe(1);
+      expect(coordsResult[0][1]).toBe(3);
     });
 
     test("valid size 3 horizontal", () => {
-      expect(board.placeShip(3, [7, 3], "horizontal")).toBe(true);
+      board.addShip(shipName3, 3);
+      expect(board.placeShip(shipName3, [7, 3], "horizontal")).toBe(true);
+      expect(board.hasDeployedShip(shipName3)).toBe(true);
+      expect(board.hasNonDeployedShip(shipName3)).toBeFalsy();
+      const coordsResult = board.getShipPosition(shipName3)[0];
+      expect(coordsResult[0][0]).toBe(7);
+      expect(coordsResult[0][1]).toBe(3);
     });
 
     test("valid size 5 vertical", () => {
-      expect(board.placeShip(5, [1, 4], "vertical")).toBe(true);
+      board.addShip(shipName5, 5);
+      expect(board.placeShip(shipName5, [1, 4], "vertical")).toBe(true);
+      expect(board.hasDeployedShip(shipName5)).toBe(true);
+      expect(board.hasNonDeployedShip(shipName5)).toBeFalsy();
+      const coordsResult = board.getShipPosition(shipName5)[0];
+      expect(coordsResult[0][0]).toBe(1);
+      expect(coordsResult[0][1]).toBe(4);
     });
 
     test("place 2 ships", () => {
-      const firstShip = board.placeShip(3, [2, 2], "vertical");
-      const secondShip = board.placeShip(4, [3, 2], "horizontal");
+      board.addShip(shipName3, 3);
+      board.addShip(shipName4, 4);
+      const firstShip = board.placeShip(shipName3, [2, 2], "vertical");
+      const secondShip = board.placeShip(shipName4, [3, 2], "horizontal");
       expect(firstShip).toBe(true);
       expect(secondShip).toBe(true);
+      expect(board.hasDeployedShip(shipName3)).toBe(true);
+      expect(board.hasDeployedShip(shipName4)).toBe(true);
     });
   });
+
   describe("invalid placements", () => {
     let board;
+    const shipName3 = "shipLength3";
+    const shipName4 = "shipLength4";
+
     beforeEach(() => {
       board = new Gameboard();
     });
     test("off grid", () => {
-      const invalid = board.placeShip(3, [2, 9], "vertical");
+      board.addShip(shipName3, 3);
+      const invalid = board.placeShip(shipName3, [2, 9], "vertical");
       expect(invalid).toBe(false);
+      expect(board.hasDeployedShip(shipName3)).toBeFalsy();
     });
 
     describe("overlapping", () => {
       let firstShip;
       beforeEach(() => {
-        firstShip = board.placeShip(3, [2, 2], "horizontal");
+        board.addShip(shipName3, 3);
+        firstShip = board.placeShip(shipName3, [2, 2], "horizontal");
+
+        board.addShip(shipName4, 4);
       });
       test("overlap vertical", () => {
-        const secondShip = board.placeShip(4, [2, 0], "vertical");
+        const secondShip = board.placeShip(shipName4, [2, 0], "vertical");
         expect(secondShip).toBe(false);
+        expect(board.hasDeployedShip(shipName4)).toBeFalsy();
       });
       test("overlap horizontal", () => {
-        const secondShip = board.placeShip(4, [3, 2], "horizontal");
+        const secondShip = board.placeShip(shipName4, [3, 2], "horizontal");
         expect(secondShip).toBe(false);
+        expect(board.hasDeployedShip(shipName4)).toBeFalsy();
       });
     });
   });
@@ -76,13 +132,16 @@ describe("place ships", () => {
 describe("receiveAttack", () => {
   describe("valid attacks", () => {
     let testBoard;
+    let shipName3 = "shipLength3";
+
     beforeEach(() => {
       testBoard = new Gameboard();
-      testBoard.placeShip(3, [2, 2], "horizontal");
+      testBoard.addShip(shipName3, 3);
+      testBoard.placeShip(shipName3, [2, 2], "horizontal");
     });
 
     test("valid miss", () => {
-      const result = testBoard.receiveAttack(7, 3);
+      let result = testBoard.receiveAttack(7, 3);
       expect(result).toBe("miss");
 
       const resultBoard = testBoard.getGameboard();
@@ -93,6 +152,8 @@ describe("receiveAttack", () => {
       expect(result).toBe("hit");
       const resultBoard = testBoard.getGameboard();
       expect(resultBoard[3][2].hit).toBe(true);
+      expect(testBoard.hasDeployedShip(shipName3)).toBe(true);
+      expect(testBoard.hasSunkShip(shipName3)).toBeFalsy();
     });
     test("valid sink", () => {
       testBoard.receiveAttack(2, 2);
@@ -102,13 +163,18 @@ describe("receiveAttack", () => {
 
       const resultBoard = testBoard.getGameboard();
       expect(resultBoard[2][2].ship.isSunk()).toBe(true);
+      expect(testBoard.hasDeployedShip(shipName3)).toBeFalsy();
+      expect(testBoard.hasSunkShip(shipName3)).toBe(true);
     });
   });
   describe("invalid attacks", () => {
     let testBoard;
+    let shipName3 = "shipLength3";
+
     beforeEach(() => {
       testBoard = new Gameboard();
-      testBoard.placeShip(3, [2, 2], "horizontal");
+      testBoard.addShip(shipName3, 3);
+      testBoard.placeShip(shipName3, [2, 2], "horizontal");
     });
     test("invalid repeat miss", () => {
       testBoard.receiveAttack(2, 1);
@@ -129,29 +195,36 @@ describe("receiveAttack", () => {
 
 describe("numSunk values", () => {
   let testBoard;
+  let shipName3 = "shipLength3";
+
   beforeEach(() => {
     testBoard = new Gameboard();
-    testBoard.placeShip(3, [2, 2], "horizontal");
+    testBoard.addShip(shipName3, 3);
+    testBoard.placeShip(shipName3, [2, 2], "horizontal");
   });
 
   test("initial is zero", () => {
-    expect(testBoard.getNumSunk()).toBe(0);
+    const sunkShips = testBoard.getSunkFleet();
+    expect(sunkShips.size).toBe(0);
   });
 
   test("after miss is still zero", () => {
     testBoard.receiveAttack(7, 3);
-    expect(testBoard.getNumSunk()).toBe(0);
+    const sunkShips = testBoard.getSunkFleet();
+    expect(sunkShips.size).toBe(0);
   });
 
   test("hit once is still zero", () => {
     testBoard.receiveAttack(3, 2);
-    expect(testBoard.getNumSunk()).toBe(0);
+    const sunkShips = testBoard.getSunkFleet();
+    expect(sunkShips.size).toBe(0);
   });
 
   test("ship is sunk - value is one", () => {
     testBoard.receiveAttack(2, 2);
     testBoard.receiveAttack(3, 2);
     testBoard.receiveAttack(4, 2);
-    expect(testBoard.getNumSunk()).toBe(1);
+    const sunkShips = testBoard.getSunkFleet();
+    expect(sunkShips.size).toBe(1);
   });
 });
